@@ -17,7 +17,74 @@ CLASS_MULT = {"Economy": 1.0, "Premium Economy": 1.4, "Business": 2.2}
 MEALS = {"No meal": 0, "Veg meal": 250, "Non-veg meal": 300}
 BAG_PRICE = 1200
 STEPS = ["Search", "Flights", "Passengers", "Seats", "Payment", "Ticket"]
-SEAT_LIST = [f"{r}{c}" for r in range(1, 11) for c in "ABCDEF"]
+CABINS = [("Business", range(1, 4), "ACDF", "biz"),
+          ("Premium Economy", range(4, 7), "ABCDEF", "prem"),
+          ("Economy", range(7, 11), "ABCDEF", "eco")]
+WINGS = {5: 45, 6: 85, 7: 125}
+
+
+def cabin_seats(name):
+    for n, rows, letters, _ in CABINS:
+        if n == name:
+            return [f"{r}{c}" for r in rows for c in letters]
+    return []
+
+
+def seat_type(seat):
+    return "Window" if seat[-1] in "AF" else ("Aisle" if seat[-1] in "CD" else "Middle")
+
+
+# cabin -> (legroom/seat pitch in inches, seat width in inches, recline in inches)
+BASE = {"Business": (40, 21, 8), "Premium Economy": (36, 18.5, 6), "Economy": (31, 17.5, 3)}
+
+
+def seat_info(seat, cabin):
+    row = int(seat[:-1])
+    pitch, width, recline = BASE[cabin]
+    base_pitch = pitch
+    notes = []
+    if row == 6:
+        pitch += 6
+        notes += ["Emergency exit row: extra legroom, but passengers must be 15+ and able to "
+                  "help in an emergency", "Close to the lavatory, so expect some foot traffic"]
+    elif row in (1, 4, 7):
+        pitch += 4
+        notes.append("Bulkhead row: no seat in front of you, but bags must go overhead")
+    if row == 5:
+        recline = 2
+        notes.append("Limited recline because of the exit row behind")
+    if row == 3:
+        notes.append("Next to the galley, so expect some noise")
+    if row == 10:
+        recline = 1
+        notes.append("Wall behind you: limited recline, near the lavatories and galley")
+    kind = seat_type(seat)
+    if kind == "Window":
+        if row <= 4:
+            view = "Clear window view, ahead of the wing"
+        elif row <= 7:
+            view = "Window view partly blocked by the wing"
+        else:
+            view = "Clear window view behind the wing, great for landing"
+    elif kind == "Aisle":
+        view = "No window, but easy to get up and walk around"
+    else:
+        view = "No window, seated between two passengers"
+    label, tone = (("Generous", "g") if pitch >= 38 else
+                   ("Comfortable", "b") if pitch >= 34 else ("Standard", ""))
+    return {"pitch": pitch, "width": width, "recline": recline, "view": view,
+            "notes": notes, "kind": kind, "label": label, "tone": tone,
+            "extra": pitch > base_pitch}
+
+
+def seat_card(i, seat, cabin):
+    d = seat_info(seat, cabin)
+    notes = "".join(f"<li>{n}</li>" for n in d["notes"])
+    return (f'<div class="info"><b>Passenger {i + 1}: seat {seat}, {d["kind"].lower()}</b>'
+            f'<div><span class="chip {d["tone"]}">Legroom {d["pitch"]} in ({d["label"]})</span>'
+            f'<span class="chip">Seat width {d["width"]} in</span>'
+            f'<span class="chip">Recline {d["recline"]} in</span></div>'
+            f'<div>🪟 {d["view"]}</div>' + (f"<ul>{notes}</ul>" if notes else "") + "</div>")
 
 # ---------- State ----------
 defaults = {"page": "Home", "bookings": [], "flight": None, "passengers": [],
@@ -89,15 +156,48 @@ h1,h2,h3{font-family:'Baloo 2',cursive!important;color:#3a1c8f}
 .tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.78rem;
  background:#ffe2ee;color:#c2185b;margin-right:6px}
 .price{font-size:1.4rem;font-weight:800;color:#ff5f6d}
-.seatrow{display:flex;gap:5px;justify-content:center;margin-bottom:5px;align-items:center}
-.seat{width:34px;height:30px;border-radius:9px 9px 3px 3px;font-size:.7rem;display:flex;
- align-items:center;justify-content:center;background:#bfe3ff;color:#16306b;
- transition:transform .15s}
-.seat:hover{transform:translateY(-3px) scale(1.12)}
-.seat.taken{background:#9aa0b4;color:#fff;opacity:.6}
+.plane-wrap{overflow:hidden;padding:10px 0 6px}
+.fuse{position:relative;z-index:0;width:340px;max-width:100%;margin:0 auto;padding-bottom:22px;
+ background:linear-gradient(90deg,#e6ebf5,#fff 50%,#e6ebf5);border:3px solid #aab3c8;
+ border-radius:170px 170px 90px 90px}
+.cockpit{width:90px;height:26px;margin:36px auto 12px;border-radius:40px 40px 10px 10px;
+ background:linear-gradient(#27325c,#4a5cb8)}
+.cabin-name{text-align:center;font-size:.75rem;color:#6a5cff;font-weight:700;margin:8px 0 2px}
+.galley{width:70%;margin:6px auto;padding:3px;border-radius:6px;background:#dfe4ef;
+ color:#667;font-size:.7rem;text-align:center}
+.prow{position:relative;display:flex;justify-content:center;align-items:center;gap:5px;
+ padding:3px 20px}
+.win{position:absolute;top:50%;width:6px;height:14px;margin-top:-7px;border-radius:4px;
+ background:#8fd0ff;border:1px solid #6aa8d8}
+.win.l{left:5px}.win.r{right:5px}
+.wing{position:absolute;top:0;bottom:0;z-index:-1;background:linear-gradient(#c9d0de,#9ea8bd)}
+.wing.l{right:100%}.wing.r{left:100%}
+.wing.l.tip{border-radius:0 0 0 40px}.wing.r.tip{border-radius:0 0 40px 0}
+.exit{position:absolute;top:-6px;background:#e53935;color:#fff;font-size:.55rem;
+ padding:0 4px;border-radius:3px}
+.exit.l{left:8px}.exit.r{right:8px}
+.seat{width:34px;height:30px;border-radius:9px 9px 4px 4px;font-size:.68rem;display:flex;
+ align-items:center;justify-content:center;color:#16306b;transition:transform .15s;
+ border-bottom:3px solid rgba(0,0,0,.18)}
+.seat.eco{background:#bfe3ff}
+.seat.prem{width:38px;height:32px;background:#ffd9b8;color:#7a3b00}
+.seat.biz{width:46px;height:38px;background:#d9c9ff;color:#3a1c8f}
+.seat:hover{transform:translateY(-3px) scale(1.1)}
+.seat.off{opacity:.35}
+.seat.taken{background:#9aa0b4;color:#fff;opacity:.65}
 .seat.mine{background:linear-gradient(#ffb347,#ff5f6d);color:#fff;font-weight:700;
- animation:pulse 1.6s infinite}
-.aisle{width:22px}.rownum{width:22px;font-size:.7rem;text-align:center;opacity:.7}
+ opacity:1;animation:pulse 1.6s infinite}
+.aisle{width:26px}.rownum{width:18px;font-size:.65rem;opacity:.6;text-align:center}
+.legend{display:flex;gap:10px;justify-content:center;margin-bottom:6px;flex-wrap:wrap}
+.legend .seat{width:auto;padding:0 10px;height:24px}
+.seat.xl{border-top:3px solid #2ecc71}
+.info{border-left:5px solid #6a5cff;background:#f3efff;border-radius:12px;color:#1b1650;
+ padding:8px 14px;margin:2px 0 12px;font-size:.9rem;animation:rise .4s ease both}
+.chip{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.78rem;
+ margin:4px 6px 4px 0;background:#e3e8ff;color:#1b1650}
+.chip.g{background:#c8f5e1;color:#0a6b46}.chip.b{background:#d6e8ff;color:#154a8a}
+.info ul{margin:4px 0 0 1rem;padding:0;font-size:.82rem}
+@media(max-width:640px){.wing{display:none}}
 .bp{background:#fff;color:#1b1650;border-radius:16px;margin:14px 0;overflow:hidden;
  box-shadow:0 10px 26px rgba(58,28,143,.25);display:flex;flex-wrap:wrap;
  animation:slide .7s cubic-bezier(.2,.9,.3,1.2) both}
@@ -183,23 +283,53 @@ def make_flights(src, dst, d):
 
 def taken_seats(flight):
     rng = random.Random(flight["number"] + str(st.session_state.date))
-    return set(rng.sample(SEAT_LIST, 20))
+    out = set()
+    for name, *_ in CABINS:
+        seats = cabin_seats(name)
+        out |= set(rng.sample(seats, max(0, min(round(len(seats) * 0.3), len(seats) - 9))))
+    return out
 
 
-def seat_map(taken, mine):
-    html = ""
-    for r in range(1, 11):
-        html += f'<div class="seatrow"><div class="rownum">{r}</div>'
-        for letter in "ABCDEF":
-            s = f"{r}{letter}"
-            cls = "taken" if s in taken else ("mine" if s in mine else "")
-            html += f'<div class="seat {cls}">{s}</div>'
-            if letter == "C":
-                html += '<div class="aisle"></div>'
-        html += "</div>"
-    legend = ('<div class="seatrow"><span class="seat">Free</span>'
-              '<span class="seat mine">You</span><span class="seat taken">Taken</span></div>')
-    st.markdown(legend + html, unsafe_allow_html=True)
+def seat_map(taken, mine, cabin):
+    h = ('<div class="legend"><span class="seat eco">Free</span><span class="seat mine">Yours</span>'
+         '<span class="seat taken">Taken</span><span class="seat eco xl">Extra legroom</span></div>'
+         '<div class="plane-wrap"><div class="fuse"><div class="cockpit"></div>')
+    breaks = {"Business": "Galley", "Premium Economy": "Lavatory"}
+    for name, rows, letters, kind in CABINS:
+        h += f'<div class="cabin-name">{name} cabin</div>'
+        half = len(letters) // 2
+        for r in rows:
+            h += '<div class="prow">'
+            if r in WINGS:
+                tip = " tip" if r == 7 else ""
+                h += "".join(f'<div class="wing {side}{tip}" style="width:{WINGS[r]}px"></div>'
+                             for side in "lr")
+            if r == 6:
+                h += '<span class="exit l">Exit</span><span class="exit r">Exit</span>'
+            h += '<span class="win l"></span><span class="win r"></span>'
+            h += f'<div class="rownum">{r}</div>'
+            for j, letter in enumerate(letters):
+                seat = f"{r}{letter}"
+                if j == half:
+                    h += '<div class="aisle"></div>'
+                if seat in taken:
+                    cls, txt = "taken", "✕"
+                elif seat in mine:
+                    cls, txt = "mine", f"P{mine[seat]}"
+                else:
+                    cls, txt = "", seat
+                off = " off" if name != cabin else ""
+                tip = xl = ""
+                if cls != "taken":
+                    d = seat_info(seat, name)
+                    tip = f' title="{seat}: {d["kind"]}, {d["pitch"]} in legroom. {d["view"]}"'
+                    xl = " xl" if d["extra"] else ""
+                h += f'<div class="seat {kind} {cls}{off}{xl}"{tip}>{txt}</div>'
+            h += "</div>"
+        if name in breaks:
+            h += f'<div class="galley">{breaks[name]}</div>'
+    h += '<div class="galley">Lavatories and galley</div></div></div>'
+    st.markdown(h, unsafe_allow_html=True)
 
 
 def boarding_pass(b, p):
@@ -324,23 +454,34 @@ elif page == "Passengers":
 # ---------- Seats ----------
 elif page == "Seats":
     progress("Seats")
+    ss = st.session_state
+    f = ss.flight
     st.header("💺 Seat Selection")
-    st.caption("Grey seats are already taken. Each passenger needs a different seat.")
-    taken = taken_seats(st.session_state.flight)
-    free = [s for s in SEAT_LIST if s not in taken]
+    st.caption(f"Your ticket is for the {f['class']} cabin, so only seats there can be chosen. "
+               "Each passenger needs a different seat.")
+    taken = taken_seats(f)
+    free = [s for s in cabin_seats(f["class"]) if s not in taken]
 
     chosen = {}
-    for i, p in enumerate(st.session_state.passengers):
+    for i, p in enumerate(ss.passengers):
         chosen[str(i)] = st.selectbox(f"{p['name']} — Seat", free,
                                       index=min(i, len(free) - 1), key=f"seat_{i}")
-    seat_map(taken, set(chosen.values()))
+        st.markdown(seat_card(i, chosen[str(i)], f["class"]), unsafe_allow_html=True)
+    seat_map(taken, {seat: int(i) + 1 for i, seat in chosen.items()}, f["class"])
+    st.caption("Hover over a seat on the map to see its legroom and view. "
+               "Seats with a green top edge have extra legroom.")
+    with st.expander("Compare the cabins"):
+        st.markdown(
+            "| Cabin | Legroom | Seat width | Recline |\n|---|---|---|---|\n"
+            + "\n".join(f"| {n} | {p} in | {w} in | {r} in |" for n, (p, w, r) in BASE.items())
+            + "\n\nExit rows and bulkhead rows add 4 to 6 inches of legroom.")
 
     if st.button("Continue to Payment", type="primary"):
         if len(set(chosen.values())) != len(chosen):
             st.error("Two passengers cannot share the same seat.")
         else:
-            st.session_state.seats = chosen
-            for i, p in enumerate(st.session_state.passengers):
+            ss.seats = chosen
+            for i, p in enumerate(ss.passengers):
                 p["seat"] = chosen[str(i)]
             go("Payment")
     if st.button("Back to Passenger Details"):
