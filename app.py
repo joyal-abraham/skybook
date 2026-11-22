@@ -39,7 +39,7 @@ st.markdown("""
  background:rgba(255,255,255,.94);border-radius:26px;padding:1.5rem 2rem 2rem!important;
  box-shadow:0 20px 60px rgba(40,20,120,.35)}
 h1,h2,h3{font-family:'Baloo 2',cursive!important;color:#3a1c8f}
-.cloud{position:fixed;z-index:1;pointer-events:none;background:rgba(255,255,255,.8);
+.cloud{position:fixed;z-index:-1;pointer-events:none;background:rgba(255,255,255,.55);
  border-radius:100px;animation:drift linear infinite}
 .cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
 .cloud::before{width:50%;height:160%;top:-70%;left:15%}
@@ -111,8 +111,17 @@ h1,h2,h3{font-family:'Baloo 2',cursive!important;color:#3a1c8f}
 .bp .row{display:flex;gap:22px;margin:14px 22px 0;flex-wrap:wrap;align-items:center}
 .bp .bar{height:34px;margin-top:10px;background:repeating-linear-gradient(90deg,#3a1c8f 0 2px,
  transparent 2px 5px,#3a1c8f 5px 6px,transparent 6px 10px)}
+.flyby{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden;
+ animation:fadeout 1.7s forwards}
+.flyplane{position:absolute;top:42%;left:-150px;font-size:5rem;
+ filter:drop-shadow(0 10px 8px rgba(0,0,0,.3));animation:flyacross 1.5s ease-in forwards}
+.flyplane::before{content:"";position:absolute;right:85%;top:55%;width:320px;height:8px;
+ border-radius:8px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95))}
+@keyframes flyacross{from{left:-150px;transform:translateY(60px)}
+ to{left:105%;transform:translateY(-140px)}}
+@keyframes fadeout{0%,85%{opacity:1}100%{opacity:0}}
 @media(max-width:640px){.block-container{padding:1rem!important}.hero h1{font-size:2rem!important}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.flyby{display:none}*{animation:none!important;transition:none!important}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -128,13 +137,20 @@ for col, label, pg in [(a, "🏠 Home", "Home"), (b, "🔎 Search Flights", "Sea
                        (c, "📚 My Bookings", "Bookings")]:
     if col.button(label, use_container_width=True, key="nav_" + pg):
         st.session_state.page = pg
+        st.session_state.fly = True
         st.rerun()
 
 page = st.session_state.page
 
+# Plane flies across the screen after a page-changing button click
+if st.session_state.pop("fly", False):
+    st.markdown('<div class="flyby"><span class="flyplane">✈️</span></div>',
+                unsafe_allow_html=True)
+
 
 def go(p):
     st.session_state.page = p
+    st.session_state.fly = True
     st.rerun()
 
 
