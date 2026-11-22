@@ -30,45 +30,96 @@ for k, v in defaults.items():
 # ---------- Styling ----------
 st.markdown("""
 <style>
-.hero{background:linear-gradient(135deg,#10263d 0%,#1d4e7a 100%);color:#fff;
- padding:2rem 2rem 1.6rem;border-radius:18px;margin-bottom:1rem}
-.hero h1{margin:0;font-size:2.4rem;color:#fff}
-.hero p{margin:.3rem 0 0;color:#f2b04a;font-size:1.05rem}
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap');
+.stApp{background:linear-gradient(160deg,#35b6ff,#6a5cff,#ff5fa2,#ffb347);
+ background-size:300% 300%;animation:sky 18s ease infinite}
+@keyframes sky{0%,100%{background-position:0% 0%}50%{background-position:100% 100%}}
+[data-testid="stHeader"]{background:transparent}
+.block-container{position:relative;z-index:2;max-width:1100px;margin-top:1rem;
+ background:rgba(255,255,255,.94);border-radius:26px;padding:1.5rem 2rem 2rem!important;
+ box-shadow:0 20px 60px rgba(40,20,120,.35)}
+h1,h2,h3{font-family:'Baloo 2',cursive!important;color:#3a1c8f}
+.cloud{position:fixed;z-index:1;pointer-events:none;background:rgba(255,255,255,.8);
+ border-radius:100px;animation:drift linear infinite}
+.cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
+.cloud::before{width:50%;height:160%;top:-70%;left:15%}
+.cloud::after{width:35%;height:130%;top:-45%;right:15%}
+.c1{width:160px;height:40px;top:12%;left:-200px;animation-duration:38s}
+.c2{width:240px;height:55px;top:45%;left:-300px;animation-duration:55s;animation-delay:-20s}
+.c3{width:120px;height:32px;top:75%;left:-200px;animation-duration:30s;animation-delay:-8s}
+@keyframes drift{to{transform:translateX(calc(100vw + 400px))}}
+.hero{position:relative;overflow:hidden;color:#fff;padding:1.4rem 2rem 2.6rem;border-radius:20px;
+ margin-bottom:1rem;background:linear-gradient(120deg,#ff5f6d,#ff9a44 50%,#ffd36b);
+ box-shadow:0 10px 24px rgba(255,95,109,.4)}
+.hero h1{margin:0;padding:0;font-size:2.8rem!important;color:#fff!important;
+ font-family:'Baloo 2',cursive;text-shadow:0 3px 0 rgba(0,0,0,.12)}
+.hero p{margin:.2rem 0 0;color:#fff!important;font-size:1.1rem}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:16px;
+ border-top:3px dashed rgba(255,255,255,.6)}
+.plane{position:absolute;bottom:2px;left:-80px;font-size:2.2rem;animation:fly 8s linear infinite}
+@keyframes fly{0%{left:-80px;transform:translateY(0)}50%{transform:translateY(-10px)}
+ 100%{left:105%;transform:translateY(0)}}
+.stButton>button,.stDownloadButton>button{border:0;border-radius:999px;font-weight:700;
+ background:linear-gradient(90deg,#6a5cff,#ff5fa2);box-shadow:0 6px 16px rgba(106,92,255,.35);
+ transition:transform .15s,box-shadow .15s}
+.stButton>button *,.stDownloadButton>button *{color:#fff!important}
+[data-testid="stBaseButton-primary"]{background:linear-gradient(90deg,#ff9a44,#ff5f6d)!important}
+.stButton>button:hover,.stDownloadButton>button:hover{transform:translateY(-3px) scale(1.03);
+ box-shadow:0 10px 22px rgba(255,95,162,.45)}
+.stButton>button:active{transform:scale(.97)}
 .steps{display:flex;gap:6px;margin:.5rem 0 1rem;flex-wrap:wrap}
-.step{flex:1;min-width:80px;text-align:center;padding:6px 4px;border-radius:8px;
- font-size:.85rem;background:rgba(128,128,128,.15)}
-.step.done{background:#1d4e7a;color:#fff}
-.step.now{background:#f2b04a;color:#10263d;font-weight:700}
-.fcard{border:1px solid rgba(128,128,128,.35);border-radius:14px;padding:14px 18px;
- margin-bottom:6px}
+.step{flex:1;min-width:80px;text-align:center;padding:7px 4px;border-radius:999px;
+ font-size:.85rem;background:#ece8ff;color:#5b4bb8}
+.step.done{background:linear-gradient(90deg,#00c9a7,#3ad6b5);color:#fff}
+.step.now{background:linear-gradient(90deg,#ff9a44,#ff5f6d);color:#fff;font-weight:700;
+ animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,95,109,.55)}50%{box-shadow:0 0 0 8px rgba(255,95,109,0)}}
+.fcard{background:#fff;color:#1b1650;border-left:8px solid #ff5fa2;border-radius:16px;
+ padding:14px 18px;margin-bottom:6px;box-shadow:0 6px 18px rgba(58,28,143,.18);
+ animation:rise .5s ease both;transition:transform .2s}
+.fcard:hover{transform:translateX(6px)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .fcard .air{font-weight:700;font-size:1.1rem}
-.fcard .route{display:flex;align-items:center;gap:14px;margin:6px 0;font-size:1.3rem;font-weight:600}
-.fcard .line{flex:1;border-top:2px dashed rgba(128,128,128,.6);text-align:center;
- font-size:.75rem;font-weight:400;position:relative;top:-2px}
+.fcard .route{display:flex;align-items:center;gap:14px;margin:8px 0;font-size:1.3rem;font-weight:600}
+.fcard .line{flex:1;position:relative;border-top:2px dashed #b7a8ff;text-align:center;
+ font-size:.75rem;font-weight:400;padding-top:6px}
+.fcard .line::after{content:"✈";position:absolute;left:0;top:-15px;font-size:1.1rem;
+ color:#6a5cff;animation:along 3s linear infinite}
+@keyframes along{to{left:calc(100% - 1rem)}}
 .tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.78rem;
- background:rgba(242,176,74,.25);margin-right:6px}
-.price{font-size:1.4rem;font-weight:700;color:#e08a00}
+ background:#ffe2ee;color:#c2185b;margin-right:6px}
+.price{font-size:1.4rem;font-weight:800;color:#ff5f6d}
 .seatrow{display:flex;gap:5px;justify-content:center;margin-bottom:5px;align-items:center}
-.seat{width:34px;height:30px;border-radius:7px 7px 3px 3px;font-size:.7rem;display:flex;
- align-items:center;justify-content:center;background:#c9dff3;color:#10263d}
-.seat.taken{background:#8a8f98;color:#fff;opacity:.6}
-.seat.mine{background:#f2b04a;color:#10263d;font-weight:700}
+.seat{width:34px;height:30px;border-radius:9px 9px 3px 3px;font-size:.7rem;display:flex;
+ align-items:center;justify-content:center;background:#bfe3ff;color:#16306b;
+ transition:transform .15s}
+.seat:hover{transform:translateY(-3px) scale(1.12)}
+.seat.taken{background:#9aa0b4;color:#fff;opacity:.6}
+.seat.mine{background:linear-gradient(#ffb347,#ff5f6d);color:#fff;font-weight:700;
+ animation:pulse 1.6s infinite}
 .aisle{width:22px}.rownum{width:22px;font-size:.7rem;text-align:center;opacity:.7}
-.bp{background:#fbf8f1;color:#10263d;border-radius:16px;margin:14px 0;overflow:hidden;
- border:1px solid #d9d2c3;display:flex;flex-wrap:wrap}
-.bp .main{flex:3;min-width:260px;padding:18px 22px}
-.bp .stub{flex:1;min-width:170px;padding:18px;border-left:2px dashed #b9b1a0;background:#f3eee2}
-.bp .head{background:#10263d;color:#f2b04a;padding:8px 22px;font-weight:700;letter-spacing:.5px}
-.bp .big{font-size:2.2rem;font-weight:800;line-height:1}
+.bp{background:#fff;color:#1b1650;border-radius:16px;margin:14px 0;overflow:hidden;
+ box-shadow:0 10px 26px rgba(58,28,143,.25);display:flex;flex-wrap:wrap;
+ animation:slide .7s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes slide{from{opacity:0;transform:translateX(-60px)}to{opacity:1;transform:none}}
+.bp .main{flex:3;min-width:260px;padding:0 0 18px}
+.bp .stub{flex:1;min-width:170px;padding:18px;border-left:2px dashed #b7a8ff;background:#fff3d6}
+.bp .head{background:linear-gradient(90deg,#6a5cff,#ff5fa2);color:#fff;padding:9px 22px;
+ font-weight:700;letter-spacing:.5px}
+.bp .big{font-size:2.2rem;font-weight:800;line-height:1;color:#3a1c8f}
 .bp .small{font-size:.75rem;color:#6b7280}
-.bp .row{display:flex;gap:22px;margin-top:12px;flex-wrap:wrap}
-.bp .bar{height:34px;margin-top:10px;background:repeating-linear-gradient(90deg,#10263d 0 2px,
- transparent 2px 5px,#10263d 5px 6px,transparent 6px 10px)}
+.bp .row{display:flex;gap:22px;margin:14px 22px 0;flex-wrap:wrap;align-items:center}
+.bp .bar{height:34px;margin-top:10px;background:repeating-linear-gradient(90deg,#3a1c8f 0 2px,
+ transparent 2px 5px,#3a1c8f 5px 6px,transparent 6px 10px)}
+@media(max-width:640px){.block-container{padding:1rem!important}.hero h1{font-size:2rem!important}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown(
-    '<div class="hero"><h1>✈️ SkyBook</h1><p>Your Journey, Our Responsibility</p></div>',
+    '<div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>'
+    '<div class="hero"><h1>SkyBook</h1><p>Your Journey, Our Responsibility</p>'
+    '<div class="plane">✈️</div></div>',
     unsafe_allow_html=True)
 
 # ---------- Navigation ----------
